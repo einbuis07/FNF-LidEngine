@@ -1,3 +1,26 @@
+# Friday Night Funkin' - Lid Engine
+--------------------------------------------------
+The Lid Engine is based of Psych Engine 0.7.3 (Finally got it working...)
+--------------------------------------------------
+# Features Of Lid Engine WOOHO-
+
+Well The Features are you can:
+Note quack so the notes like being drunk...
+ALOT OF SPAM FEATURES! Like in JS Engine.......
+I also implemeted the Always PErfect Rank Option as a cheat a bit but it seems dosent work... I will fix that in another bug fix update am sorry....
+Also chaning the Menu Music from Classic To GF SOng (Girlfriend's SOng) OR back to Classic one
+---------------------------------------------------
+# How long will this engine go?
+
+Actually? Maybe 1-2 Years or maybe even 3 Cuz 4 Years i cannot.......
+If i dont accidently End the Support Of It Very Early.....
+---------------------------------------------------
+# Can I use this engine?
+
+What a Dumb Question OF COURSE!
+---------------------------------------------------
+Alsooo i will paste here a Original Psych Engine description SOoo Have fun in Lid Engine!
+---------------------------------------------------
 # Friday Night Funkin' - Psych Engine
 Engine originally used on [Mind Games Mod](https://gamebanana.com/mods/301107), intended to be a fix for the vanilla version's many issues while keeping the casual play aspect of it. Also aiming to be an easier alternative to newbie coders.
 
