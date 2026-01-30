@@ -12,7 +12,7 @@ import options.OptionsState;
 class MainMenuState extends MusicBeatState
 {
 	public static var psychEngineVersion:String = '0.7.3';
-	public static var lidEngineVersion:String = '1.0.0';
+	public static var lidEngineVersion:String = '1.0.1';
 	public static var curSelected:Int = 0;
 
 	var menuItems:FlxTypedGroup<FlxSprite>;
@@ -95,7 +95,7 @@ class MainMenuState extends MusicBeatState
 			menuItem.scrollFactor.set(0, scr);
 			
 			// Set X to 80 for all items to keep them on the left
-			menuItem.x = 80; 
+			menuItem.x = 120; 
 			menuItem.updateHitbox();
 		}
 
@@ -103,7 +103,7 @@ class MainMenuState extends MusicBeatState
 		psychVer.scrollFactor.set();
 		psychVer.setFormat("VCR OSD Mono", 16, FlxColor.WHITE, LEFT, FlxTextBorderStyle.OUTLINE, FlxColor.BLACK);
 		add(psychVer);
-		var lidVer:FlxText = new FlxText(12, FlxG.height - 64, 0, "Lid Engine v" + lidEngineVersion, 12);
+		var lidVer:FlxText = new FlxText(12, FlxG.height - 64, 0, "Lid Engine Beta v" + lidEngineVersion, 12);
 		lidVer.scrollFactor.set();
 		lidVer.setFormat("VCR OSD Mono", 16, FlxColor.WHITE, LEFT, FlxTextBorderStyle.OUTLINE, FlxColor.BLACK);
 		add(lidVer);

@@ -577,7 +577,15 @@ class PlayState extends MusicBeatState
 		botplayTxt.visible = cpuControlled;
 		uiGroup.add(botplayTxt);
 		if(ClientPrefs.data.downScroll)
-			botplayTxt.y = timeBar.y - 78;
+		{
+			// 0.11 is near the top of the screen (11% down)
+			healthBar.y = FlxG.height * 0.11; 
+			iconP1.y = healthBar.y - 75;
+			iconP2.y = healthBar.y - 75;
+			
+			// Puts the score text slightly ABOVE the health bar
+			scoreTxt.y = healthBar.y - 30; 
+		}
 
 		uiGroup.cameras = [camHUD];
 		noteGroup.cameras = [camHUD];
@@ -651,6 +659,15 @@ class PlayState extends MusicBeatState
 		Paths.clearUnusedMemory();
 
 		if(eventNotes.length < 1) checkEventNote();
+
+		if (ClientPrefs.data.lidWatermark) 
+		{
+			var lidWatermark:FlxText = new FlxText(10, FlxG.height - 30, 0, "Lid Engine Beta - 1.0.1", 16);
+			lidWatermark.setFormat(Paths.font("vcr.ttf"), 16, FlxColor.WHITE, RIGHT, FlxTextBorderStyle.OUTLINE, FlxColor.BLACK);
+			lidWatermark.scrollFactor.set();
+			lidWatermark.cameras = [camHUD];
+			add(lidWatermark);
+		}
 	}
 
 	function set_songSpeed(value:Float):Float
@@ -1493,7 +1510,7 @@ class PlayState extends MusicBeatState
 	private function generateStaticArrows(player:Int):Void
 	{
 		var strumLineX:Float = ClientPrefs.data.middleScroll ? STRUM_X_MIDDLESCROLL : STRUM_X;
-		var strumLineY:Float = ClientPrefs.data.downScroll ? (FlxG.height - 150) : 50;
+		var strumLineY:Float = ClientPrefs.data.downScroll ? (FlxG.height - 140) : 50;
 		for (i in 0...4)
 		{
 			// FlxG.log.add(i);
@@ -1650,6 +1667,12 @@ class PlayState extends MusicBeatState
 		callOnScripts('onUpdate', [elapsed]);
 
 		super.update(elapsed);
+
+		// --- LID ENGINE: HARDCORE GOD MODE ---
+        if (ClientPrefs.data.godMode && health <= 0.05) 
+        {
+            health = 0.05;
+        }
 
 		var lerpVal:Float = FlxMath.bound(elapsed * 12, 0, 1);
 		healthBar.percent = FlxMath.lerp(healthBar.percent, (health / 2) * 100, lerpVal);
@@ -2936,22 +2959,44 @@ class PlayState extends MusicBeatState
 		if (!note.isSustainNote) invalidateNote(note);
 	}
 
-	public function goodNoteHit(note:Note):Void
-	{
-		if(note.wasGoodHit) return;
-		if(cpuControlled && note.ignoreNote) return;
+	function goodNoteHit(note:Note):Void
+    {
+        if(note.wasGoodHit) return;
+        if(cpuControlled && note.ignoreNote) return;
 
-		// --- LID ENGINE SCORE LOGIC ---
+        // --- LID ENGINE MASTER PERFECT (Stickie002) ---
         if (ClientPrefs.data.alwaysPerfect || cpuControlled) 
         {
             note.rating = 'sick';
-            songScore += 350;
-            songHits++;
+            note.ratingMod = 1; 
             ratingPercent = 1;
             ratingString = 'Perfect!';
-        }
-        // ------------------------------
-		scoreTxt.text = 'Score: ' + songScore + ' | Misses: ' + songMisses + ' | Rating: ' + ratingString;
+            
+            if (!note.isSustainNote) 
+            {
+                songScore += 350;
+                songHits++;
+                showRating = true; 
+                popUpScore(note); 
+            } 
+            else 
+            {
+                showRating = false; 
+            }
+
+            if(scoreTxt != null) {
+                scoreTxt.text = 'Score: ' + songScore + ' | Misses: 0 | Rating: ' + ratingString + ' (100%)';
+            }
+
+            // FIXED: Changed daNote to note
+            var spr:StrumNote = playerStrums.members[Math.floor(Math.abs(note.noteData))];
+            if(spr != null) {
+                spr.playAnim('confirm', true); 
+                spr.resetAnim = 0.15; 
+            }
+        
+            note.wasGoodHit = true;
+    }
 
 		var isSus:Bool = note.isSustainNote; // "GET OUT OF MY HEAD, GET OUT OF MY HEAD, GET OUT OF MY HEAD" Shadow Mario Stop! - Stickie002
 		var leData:Int = Math.round(Math.abs(note.noteData));
@@ -3007,14 +3052,6 @@ class PlayState extends MusicBeatState
 				}
 			}
 		}
-
-		if(!cpuControlled)
-		{
-			var spr = playerStrums.members[note.noteData];
-			if(spr != null) spr.playAnim('confirm', true);
-		}
-		else strumPlayAnim(false, Std.int(Math.abs(note.noteData)), Conductor.stepCrochet * 1.25 / 1000 / playbackRate);
-		vocals.volume = 1;
 
 		if (!note.isSustainNote)
 		{
@@ -3428,35 +3465,64 @@ class PlayState extends MusicBeatState
 	public var ratingName:String = '?';
 	public var ratingPercent:Float;
 	public var ratingFC:String;
-	public function RecalculateRating(badHit:Bool = false) {
+	public function RecalculateRating(badHit:Bool = false)
+	{
+    // --- LID ENGINE MASTER PERFECT OVERRIDE ---
+    if (ClientPrefs.data.alwaysPerfect) 
+    {
+        if (totalPlayed > 0) 
+        {
+            ratingString = 'Perfect!'; 
+            ratingPercent = 1;
+            ratingName = 'Perfect!';   
+            ratingFC = 'PFC';   
+        }
+        else 
+        {
+            ratingString = '?';
+            ratingName = '?';
+            ratingFC = ''; 
+        }
+    }
+    else 
+    {
+        // --- NORMAL ENGINE LOGIC ---
+        var ret:Dynamic = callOnScripts('onRecalculateRating', null, true);
+        if(ret != LuaUtils.Function_Stop)
+        {
+            ratingName = '?';
+            if(totalPlayed != 0)
+            {
+                ratingPercent = Math.min(1, Math.max(0, totalNotesHit / totalPlayed));
+
+                ratingName = ratingStuff[ratingStuff.length-1][0]; 
+                if(ratingPercent < 1)
+                {
+                    for (i in 0...ratingStuff.length-1)
+                    {
+                        if(ratingPercent < ratingStuff[i][1])
+                        {
+                            ratingName = ratingStuff[i][0];
+                            break;
+                        }
+                    }
+                }
+            }
+            fullComboFunction(); 
+            // Inside the else { ... } block, at the very bottom
+			ratingName = ratingName.toLowerCase(); 
+			ratingString = ratingName;
+			
+        }
+    }
+
+		// --- FINAL SYNC (This runs for BOTH modes) ---
+		updateScore(badHit); 
+
 		setOnScripts('score', songScore);
 		setOnScripts('misses', songMisses);
 		setOnScripts('hits', songHits);
 		setOnScripts('combo', combo);
-
-		var ret:Dynamic = callOnScripts('onRecalculateRating', null, true);
-		if(ret != LuaUtils.Function_Stop)
-		{
-			ratingName = '?';
-			if(totalPlayed != 0) //Prevent divide by 0
-			{
-				// Rating Percent
-				ratingPercent = Math.min(1, Math.max(0, totalNotesHit / totalPlayed));
-				//trace((totalNotesHit / totalPlayed) + ', Total: ' + totalPlayed + ', notes hit: ' + totalNotesHit);
-
-				// Rating Name
-				ratingName = ratingStuff[ratingStuff.length-1][0]; //Uses last string
-				if(ratingPercent < 1)
-					for (i in 0...ratingStuff.length-1)
-						if(ratingPercent < ratingStuff[i][1])
-						{
-							ratingName = ratingStuff[i][0];
-							break;
-						}
-			}
-			fullComboFunction();
-		}
-		updateScore(badHit); // score will only update after rating is calculated, if it's a badHit, it shouldn't bounce
 		setOnScripts('rating', ratingPercent);
 		setOnScripts('ratingName', ratingName);
 		setOnScripts('ratingFC', ratingFC);
